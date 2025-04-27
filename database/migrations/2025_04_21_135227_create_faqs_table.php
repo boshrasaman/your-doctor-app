@@ -12,9 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('faqs', function (Blueprint $table) {
-            $table->id();
+            $table->id('faq_id');
+            $table->text('question');
+            $table->text('answer');
+            $table->string('category', 100)->nullable();
+            $table->unsignedBigInteger('created_by_admin_id');
             $table->timestamps();
+        
+            $table->foreign('created_by_admin_id')->references('user_id')->on('users');
         });
+        
     }
 
     /**

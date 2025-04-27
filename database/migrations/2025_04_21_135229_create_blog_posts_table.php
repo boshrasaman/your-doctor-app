@@ -12,9 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('blog_posts', function (Blueprint $table) {
-            $table->id();
+            $table->id('post_id');
+            $table->unsignedBigInteger('author_doctor_id');
+            $table->string('title');
+            $table->text('content');
+            $table->string('featured_image_url')->nullable();
+            $table->string('video_url')->nullable();
+            $table->string('status')->nullable();
+            $table->timestamp('published_at')->nullable();
             $table->timestamps();
+        
+            $table->foreign('author_doctor_id')->references('doctor_id')->on('doctor_profiles');
         });
+        
     }
 
     /**

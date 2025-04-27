@@ -11,19 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('prescriptions', function (Blueprint $table) {
-            $table->id('prescription_id');
-            $table->unsignedBigInteger('consultation_id');
+        Schema::create('consultations', function (Blueprint $table) {
+            $table->id('consultation_id');
             $table->unsignedBigInteger('patient_user_id');
             $table->unsignedBigInteger('doctor_user_id');
-            $table->text('medication_details');
-            $table->text('instructions');
-            $table->date('issue_date');
+            $table->dateTime('start_time');
+            $table->dateTime('end_time')->nullable();
+            $table->string('status')->nullable();
+            $table->unsignedBigInteger('payment_id')->nullable();
             $table->timestamps();
         
-            $table->foreign('consultation_id')->references('consultation_id')->on('consultations');
             $table->foreign('patient_user_id')->references('user_id')->on('users');
             $table->foreign('doctor_user_id')->references('user_id')->on('users');
+            $table->foreign('payment_id')->references('payment_id')->on('payments');
         });
         
     }
@@ -33,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('prescriptions');
+        Schema::dropIfExists('consultations');
     }
 };

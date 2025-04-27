@@ -12,9 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('messages', function (Blueprint $table) {
-            $table->id();
+            $table->id('message_id');
+            $table->unsignedBigInteger('consultation_id');
+            $table->unsignedBigInteger('sender_user_id');
+            $table->text('message_content');
+            $table->boolean('is_read')->default(false);
+            $table->string('attachment_url')->nullable();
+            $table->string('attachment_type')->nullable();
             $table->timestamps();
+        
+            $table->foreign('consultation_id')->references('consultation_id')->on('consultations');
+            $table->foreign('sender_user_id')->references('user_id')->on('users');
         });
+        
     }
 
     /**
