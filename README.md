@@ -121,7 +121,6 @@ php artisan make:resource AppointmentResource
 
 
 وأخيراً اخبرني ماذا يجب ان اضيف ضمن Api.php
-<?php
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -133,11 +132,7 @@ use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\Patient;
 use App\Http\Controllers\Api\Doctor;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-*/
+
 
 // --- Public Routes ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -211,11 +206,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- Admin Routes (Potentially for mobile admin app? Usually in web.php) ---
     // If needed, add admin-specific API routes here, protected by middleware('role:admin')
 });
+---
 
 ثم ضمن 
 web.php
 الذي يحتوي 
-<?php
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth; // For Auth routes
@@ -230,11 +225,6 @@ use App\Http\Controllers\Admin\BlogPostController as AdminBlogPostController; //
 use App\Http\Controllers\Admin\PublicQuestionController as AdminPublicQuestionController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
 
 Route::get('/', function () {
     // return view('welcome'); // Or redirect to admin login/dashboard
@@ -291,7 +281,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 php artisan make:middleware CheckRole
 
 ثم يتم صناعته كما يلي
-<?php
+
 
 namespace App\Http\Middleware;
 
@@ -368,4 +358,194 @@ resources/views/admin/specializations/: (وغيرها مثل faqs, blog, payment
 index.blade.php: لعرض قائمة بالاختصاصات/الأسئلة الشائعة/المقالات/الدفعات.
 create.blade.php: نموذج لإضافة عنصر جديد.
 edit.blade.php: نموذج لتعديل عنصر موجود.
+
+# ... وأنشئ موارد أخرى حسب الحاجة ...
+
+-------------------------------------------------
+
+
+رائع، أنت تبني مشروعًا متكاملًا جدًا باستخدام Laravel، يضم واجهات برمجية (API) للمستخدمين بأنواعهم (مريض، طبيب، مدير)، بالإضافة إلى لوحة تحكم إدارية على الويب. إليك كل ما طلبته بشكل منظم:
+
+---
+
+## ✅ أوامر إنشاء جميع المتحكمات Controllers
+
+### --- API Controllers ---
+
+```bash
+php artisan make:controller Api/AuthController --api
+php artisan make:controller Api/SpecializationController --api
+php artisan make:controller Api/FaqController --api
+```
+
+### --- Patient Controllers ---
+
+```bash
+php artisan make:controller Api/Patient/AppointmentController --api
+php artisan make:controller Api/Patient/ConsultationController --api
+php artisan make:controller Api/Patient/DoctorSearchController --api
+php artisan make:controller Api/Patient/PublicQuestionController --api
+php artisan make:controller Api/Patient/BlogController --api
+php artisan make:controller Api/Patient/PaymentController --api
+```
+
+### --- Doctor Controllers ---
+
+```bash
+php artisan make:controller Api/Doctor/ProfileController --api
+php artisan make:controller Api/Doctor/ScheduleController --api
+php artisan make:controller Api/Doctor/ConsultationController --api
+php artisan make:controller Api/Doctor/PublicQuestionController --api
+php artisan make:controller Api/Doctor/BlogPostController --api
+```
+
+### --- Admin Panel Controllers ---
+
+```bash
+php artisan make:controller Admin/DashboardController
+php artisan make:controller Admin/UserController
+php artisan make:controller Admin/DoctorProfileController
+php artisan make:controller Admin/SpecializationController
+php artisan make:controller Admin/FaqController
+php artisan make:controller Admin/BlogPostController
+php artisan make:controller Admin/PublicQuestionController
+php artisan make:controller Admin/PaymentController
+```
+
+---
+
+## ✅ أوامر إنشاء طلبات التحقق Requests
+
+```bash
+php artisan make:request Auth/LoginRequest
+php artisan make:request Auth/RegisterRequest
+php artisan make:request Patient/StoreAppointmentRequest
+php artisan make:request Doctor/UpdateProfileRequest
+php artisan make:request Admin/StoreDoctorRequest
+
+# طلبات إضافية مقترحة
+php artisan make:request Patient/StoreConsultationRequest
+php artisan make:request Doctor/StorePrescriptionRequest
+php artisan make:request Patient/StorePublicQuestionRequest
+php artisan make:request Doctor/AnswerPublicQuestionRequest
+php artisan make:request Patient/StoreBlogCommentRequest
+php artisan make:request Doctor/StoreBlogPostRequest
+php artisan make:request Doctor/UpdateScheduleRequest
+```
+
+---
+
+## ✅ أوامر إنشاء الموارد Resources
+
+```bash
+php artisan make:resource UserResource
+php artisan make:resource DoctorProfileResource
+php artisan make:resource SpecializationResource
+php artisan make:resource AppointmentResource
+
+# موارد إضافية حسب الحاجة
+php artisan make:resource ConsultationResource
+php artisan make:resource PrescriptionResource
+php artisan make:resource FaqResource
+php artisan make:resource BlogPostResource
+php artisan make:resource BlogCommentResource
+php artisan make:resource PublicQuestionResource
+php artisan make:resource PublicAnswerResource
+php artisan make:resource PaymentResource
+```
+
+---
+
+## ✅ Middleware للتحقق من الدور
+
+```bash
+php artisan make:middleware CheckRole
+```
+
+**محتوى CheckRole.php**:
+
+```php
+public function handle($request, Closure $next, ...$roles)
+{
+    if (!Auth::check()) {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        return redirect()->route('admin.login');
+    }
+
+    $user = Auth::user();
+    foreach ($roles as $role) {
+        if ($user->role === $role) {
+            return $next($request);
+        }
+    }
+
+    if ($request->expectsJson()) {
+        return response()->json(['message' => 'Unauthorized. Insufficient role.'], 403);
+    }
+
+    abort(403, 'Unauthorized action.');
+}
+```
+
+**سجله داخل `Kernel.php`:**
+
+```php
+protected $routeMiddleware = [
+    // ...
+    'role' => \App\Http\Middleware\CheckRole::class,
+];
+```
+
+---
+
+## ✅ ملفات المسارات `routes/api.php` و `routes/web.php`
+
+تم شرحك جيدًا، وأكملت بالفعل غالبية `api.php` و `web.php` بشكل صحيح. النقاط المهمة:
+
+* احرص على **استخدام `auth:sanctum`** في group الرئيسي:
+
+```php
+Route::middleware('auth:sanctum')->group(function () {
+    // كل ما كتبته هنا صحيح
+});
+```
+
+* أضف المسارات العامة خارج مجموعة `auth`:
+
+```php
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
+```
+
+---
+
+## ✅ الواجهات (Views) المتوقعة
+
+```plaintext
+resources/views/layouts/admin.blade.php         // تخطيط رئيسي
+resources/views/auth/login.blade.php            // تسجيل دخول المدير
+resources/views/admin/dashboard.blade.php       // لوحة التحكم
+resources/views/admin/users/                    // إدارة المستخدمين
+resources/views/admin/doctors/                  // إدارة الأطباء
+resources/views/admin/specializations/          // إدارة الاختصاصات
+resources/views/admin/faqs/                     // إدارة الأسئلة الشائعة
+resources/views/admin/blog-posts/               // إدارة المقالات
+resources/views/admin/public-questions/         // إدارة الأسئلة العامة
+resources/views/admin/payments/                 // إدارة المدفوعات
+```
+
+---
+
+## 🎯 ماذا تبقى بعد هذا؟
+
+1. **كتابة كل Controller وتنفيذه باستخدام Service أو مباشرة.**
+2. **تفعيل Sanctum وتكوينه إذا لم يتم.**
+3. **استخدام Policies و Gates للسيطرة على التصاريح الدقيقة.**
+4. **إنشاء API documentation باستخدام Laravel Scribe أو Swagger.**
+5. **اختبار شامل (Feature + Unit Tests).**
+6. **تصميم لوحة التحكم Bootstrap/Blade أو باستخدام أدوات مثل Laravel Breeze.**
+
+هل ترغب أن أساعدك بكتابة أحد الـ Controllers أو Form Requests أو أحد الموارد Resource؟
 
